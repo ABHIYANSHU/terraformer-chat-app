@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChatService } from '../services/chat.service';
 import { ChatMessage } from '../models/chat-message';
+import { ChatSession } from '../models/chat-session';
 import { marked } from 'marked';
 import * as Prism from 'prismjs';
 import 'prismjs/components/prism-javascript';
@@ -25,8 +26,11 @@ import 'prismjs/components/prism-yaml';
 })
 export class ChatComponent implements OnInit, AfterViewChecked {
   messages: ChatMessage[] = [];
+  chatSessions: ChatSession[] = [];
+  currentSessionId: string = '';
   newMessage: string = '';
   isLoading: boolean = false;
+  showSidebar: boolean = true;
   
   @ViewChild('chatContainer') private chatContainer!: ElementRef;
 
@@ -35,6 +39,14 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   ngOnInit(): void {
     this.chatService.getMessages().subscribe(messages => {
       this.messages = messages;
+    });
+    
+    this.chatService.getChatSessions().subscribe(sessions => {
+      this.chatSessions = sessions;
+    });
+    
+    this.chatService.getCurrentSessionId().subscribe(sessionId => {
+      this.currentSessionId = sessionId;
     });
   }
 
@@ -53,6 +65,41 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     setTimeout(() => {
       this.isLoading = false;
     }, 1000);
+  }
+  
+  /**
+   * Starts a new chat session by calling the service method
+   */
+  startNewChat(): void {
+    this.chatService.startNewChat();
+    this.newMessage = '';
+    this.isLoading = false;
+  }
+  
+  /**
+   * Switch to a different chat session
+   */
+  switchSession(sessionId: string): void {
+    this.chatService.switchSession(sessionId);
+    this.newMessage = '';
+    this.isLoading = false;
+  }
+  
+  /**
+   * Delete a chat session
+   */
+  deleteSession(event: Event, sessionId: string): void {
+    event.stopPropagation(); // Prevent triggering the switchSession
+    if (confirm('Are you sure you want to delete this chat?')) {
+      this.chatService.deleteSession(sessionId);
+    }
+  }
+  
+  /**
+   * Toggle the sidebar visibility
+   */
+  toggleSidebar(): void {
+    this.showSidebar = !this.showSidebar;
   }
 
   // Handle key press events
