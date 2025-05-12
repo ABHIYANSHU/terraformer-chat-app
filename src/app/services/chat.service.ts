@@ -14,7 +14,6 @@ export class ChatService {
   private currentSessionId = new BehaviorSubject<string>('');
   
   private apiUrl = environment.apiUrl;
-  private apiToken = environment.apiToken;
   
   constructor(private http: HttpClient) {
     // Load saved sessions from localStorage or create a new one if none exist
@@ -45,6 +44,41 @@ export class ChatService {
     }
   }
   
+  // Method to remove a message by ID
+  removeMessage(messageId: string): void {
+    const currentMessages = this.messages.getValue();
+    const updatedMessages = currentMessages.filter(msg => msg.id !== messageId);
+    this.messages.next(updatedMessages);
+    
+    // Also update the messages in the current chat session
+    const sessionId = this.currentSessionId.getValue();
+    if (sessionId) {
+      this.updateSessionMessages(sessionId, updatedMessages);
+    }
+  }
+  
+  // Method to update a message by ID
+  updateMessage(messageId: string, updatedMessage: Partial<ChatMessage>): void {
+    const currentMessages = this.messages.getValue();
+    const messageIndex = currentMessages.findIndex(msg => msg.id === messageId);
+    
+    if (messageIndex !== -1) {
+      const updatedMessages = [...currentMessages];
+      updatedMessages[messageIndex] = {
+        ...updatedMessages[messageIndex],
+        ...updatedMessage
+      };
+      
+      this.messages.next(updatedMessages);
+      
+      // Also update the message in the current chat session
+      const sessionId = this.currentSessionId.getValue();
+      if (sessionId) {
+        this.updateSessionMessages(sessionId, updatedMessages);
+      }
+    }
+  }
+  
   private updateSessionMessages(sessionId: string, messages: ChatMessage[]): void {
     const sessions = this.chatSessions.getValue();
     const sessionIndex = sessions.findIndex(s => s.id === sessionId);
@@ -53,25 +87,6 @@ export class ChatService {
       const updatedSession = {
         ...sessions[sessionIndex],
         messages,
-        updatedAt: new Date()
-      };
-      
-      const updatedSessions = [...sessions];
-      updatedSessions[sessionIndex] = updatedSession;
-      
-      this.chatSessions.next(updatedSessions);
-      this.saveSessions(updatedSessions);
-    }
-  }
-  
-  private updateSessionTokens(sessionId: string, tokens: number): void {
-    const sessions = this.chatSessions.getValue();
-    const sessionIndex = sessions.findIndex(s => s.id === sessionId);
-    
-    if (sessionIndex !== -1) {
-      const updatedSession = {
-        ...sessions[sessionIndex],
-        totalTokens: tokens,
         updatedAt: new Date()
       };
       
@@ -92,9 +107,18 @@ export class ChatService {
       timestamp: new Date()
     });
 
+    // Create a loading message with a placeholder
+    const loadingMessageId = this.generateId();
+    this.addMessage({
+      id: loadingMessageId,
+      content: 'Thinking...',
+      sender: 'assistant',
+      timestamp: new Date(),
+      isLoading: true
+    });
+
     // Set up headers for the API request
     const headers = new HttpHeaders({
-      'Authorization': `Bearer ${this.apiToken}`,
       'Content-Type': 'application/json'
     });
 
@@ -111,7 +135,6 @@ export class ChatService {
     const sessionId = this.currentSessionId.getValue();
     const sessions = this.chatSessions.getValue();
     const currentSession = sessions.find(s => s.id === sessionId);
-    let totalTokens = currentSession ? currentSession.totalTokens : 0;
 
     // Make the API request
     this.http.post(this.apiUrl, body, { headers }).subscribe({
@@ -119,34 +142,28 @@ export class ChatService {
         // Handle successful response
         console.log('API Response:', response);
         
+        // Remove the loading message
+        this.removeMessage(loadingMessageId);
+        
         // Add the assistant's message from the API response
         this.addMessage({
           id: this.generateId(),
-          content: response.response,
+          content: response,
           sender: 'assistant',
           timestamp: new Date()
         });
-        
-        // Update tokens for the current session
-        totalTokens += response.outputTokens;
-        if (sessionId) {
-          this.updateSessionTokens(sessionId, totalTokens);
-        }
 
         // Update session title if it's the first message
         if (currentSession && currentSession.messages.length <= 2) {
           this.updateSessionTitle(sessionId, this.generateSessionTitle(content));
         }
-
-        // Log additional information from the response
-        console.log('Input Tokens:', response.inputTokens);
-        console.log('Output Tokens:', response.outputTokens);
-        console.log('Total Tokens:', totalTokens);
-        console.log('Cost:', response.cost);
       },
       error: (error) => {
         // Handle error
         console.error('API Error:', error);
+        
+        // Remove the loading message
+        this.removeMessage(loadingMessageId);
         
         // Add an error message
         this.addMessage({

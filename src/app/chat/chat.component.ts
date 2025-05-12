@@ -39,6 +39,9 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   ngOnInit(): void {
     this.chatService.getMessages().subscribe(messages => {
       this.messages = messages;
+      
+      // Check if any message has isLoading=true
+      this.isLoading = this.messages.some(message => message.isLoading);
     });
     
     this.chatService.getChatSessions().subscribe(sessions => {
@@ -57,14 +60,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   sendMessage(): void {
     if (!this.newMessage.trim()) return;
     
-    this.isLoading = true;
     this.chatService.sendMessage(this.newMessage);
     this.newMessage = '';
-    
-    // Simulate loading state
-    setTimeout(() => {
-      this.isLoading = false;
-    }, 1000);
   }
   
   /**
@@ -73,7 +70,6 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   startNewChat(): void {
     this.chatService.startNewChat();
     this.newMessage = '';
-    this.isLoading = false;
   }
   
   /**
@@ -82,7 +78,6 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   switchSession(sessionId: string): void {
     this.chatService.switchSession(sessionId);
     this.newMessage = '';
-    this.isLoading = false;
   }
   
   /**

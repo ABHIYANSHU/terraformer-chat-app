@@ -60,7 +60,7 @@
     
     <!-- Messages -->
     <div *ngFor="let message of messages" 
-         [ngClass]="{'message': true, 'user-message': message.sender === 'user', 'assistant-message': message.sender === 'assistant'}">
+         [ngClass]="{'message': true, 'user-message': message.sender === 'user', 'assistant-message': message.sender === 'assistant', 'loading-message': message.isLoading}">
       <div class="message-avatar">
         <div class="avatar" [ngClass]="{'user-avatar': message.sender === 'user', 'assistant-avatar': message.sender === 'assistant'}">
           {{ message.sender === 'user' ? 'U' : 'A' }}
@@ -71,25 +71,20 @@
           <span class="sender-name">{{ message.sender === 'user' ? 'You' : 'Assistant' }}</span>
           <span class="timestamp">{{ message.timestamp | date:'short' }}</span>
         </div>
-        <div class="message-body" [innerHTML]="formatMessage(message.content)"></div>
+        
+        <!-- Loading indicator for this specific message -->
+        <div *ngIf="message.isLoading" class="loading-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        
+        <!-- Regular message content -->
+        <div *ngIf="!message.isLoading" class="message-body" [innerHTML]="formatMessage(message.content)"></div>
         
         <!-- File name display if present -->
         <div *ngIf="message.fileName" class="file-info">
           <span class="file-name">{{ message.fileName }}</span>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Loading indicator -->
-    <div *ngIf="isLoading" class="message assistant-message loading-message">
-      <div class="message-avatar">
-        <div class="avatar assistant-avatar">A</div>
-      </div>
-      <div class="message-content">
-        <div class="loading-dots">
-          <span></span>
-          <span></span>
-          <span></span>
         </div>
       </div>
     </div>

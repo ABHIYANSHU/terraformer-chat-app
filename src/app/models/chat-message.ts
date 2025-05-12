@@ -6,4 +6,5 @@ export interface ChatMessage {
   isCode?: boolean;
   language?: string;
   fileName?: string;
+  isLoading?: boolean;
 }
