@@ -153,8 +153,12 @@ export class ChatService {
           timestamp: new Date()
         });
 
-        // Update session title if it's the first message
-        if (currentSession && currentSession.messages.length <= 2) {
+        // Update session title if it's the first user message
+        // We need to count the real messages (excluding loading messages)
+        // and check if this is the first user message in the conversation
+        const realMessages = currentSession?.messages.filter(msg => !msg.isLoading) || [];
+        const userMessages = realMessages.filter(msg => msg.sender === 'user');
+        if (userMessages.length === 1) {
           this.updateSessionTitle(sessionId, this.generateSessionTitle(content));
         }
       },
