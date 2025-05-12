@@ -11,7 +11,7 @@
   color: white;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid #444;
+  border-right: 1px solid #0c0c0c;
   transition: width 0.3s ease;
   overflow: hidden;
 }
@@ -41,7 +41,7 @@
   margin-bottom: 8px;
   cursor: pointer;
   position: relative;
-  background-color: #2d2d33;
+  background-color: #777789;
   transition: background-color 0.2s;
 }
 
@@ -51,7 +51,7 @@
 
 .session-item.active {
   background-color: #3a3a44;
-  border-left: 3px solid #5436da;
+  border-left: 3px solid #FFC300;
 }
 
 .session-title {
@@ -98,7 +98,7 @@
 
 .chat-header {
   padding: 16px;
-  background-color: #343541;
+  background-color: #0c0c0c;
   color: white;
   display: flex;
   justify-content: space-between;
@@ -128,7 +128,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background-color: #4a2fc9;
+  background-color: #0630ef;
   color: white;
   border: none;
   border-radius: 6px;
@@ -342,6 +342,15 @@ button:disabled {
 /* File upload styling */
 .file-upload {
   position: relative;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  z-index: -1;
 }
 
 .file-upload-label {
