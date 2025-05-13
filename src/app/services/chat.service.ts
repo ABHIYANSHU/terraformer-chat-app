@@ -148,7 +148,7 @@ export class ChatService {
         // Add the assistant's message from the API response
         this.addMessage({
           id: this.generateId(),
-          content: response,
+          content: response.message,
           sender: 'assistant',
           timestamp: new Date()
         });
