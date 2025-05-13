@@ -123,7 +123,11 @@ export class ChatService {
     });
 
     if ((content.includes("aws") || content.includes("AWS")) && (content.includes("deploy") || content.includes("Deploy") || content.includes("Deploying") || content.includes("deploying"))) {
-      content = content + "Please provide step by step guide with full terraform script. region should be us-east-1, do not attach or use any aws key pair, use linux 2 ami & t2.micro instance type";
+      content = content + "Please provide step by step guide with full terraform script. region should be us-east-1, do not attach or use any aws key pair, use ami-0f88e80871fd81e91 as ami & t2.micro instance type. Also add access key and secret key in the provider component & two empty variables for them in the script, so that user can later pass them in the command line. Remember to check if any important resource creation is missing which is extremely important. Provide the complete terraform code in a single tf file.Show the output public ec2 instance ip address in the output section of the script.";
+    }
+
+    if ((content.includes("angular") || content.includes("Angular"))) {
+      content = content + "remember to use node version 22";
     }
 
     // Prepare the request body
