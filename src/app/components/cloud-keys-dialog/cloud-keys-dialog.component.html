@@ -1,0 +1,72 @@
+<div class="cloud-keys-button" (click)="openDialog()">
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+    <path d="M0 8a4 4 0 0 1 7.465-2H14a.5.5 0 0 1 .354.146l1.5 1.5a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0L13 9.207l-.646.647a.5.5 0 0 1-.708 0L11 9.207l-.646.647a.5.5 0 0 1-.708 0L9 9.207l-.646.647A.5.5 0 0 1 8 10h-.535A4 4 0 0 1 0 8zm4-3a3 3 0 1 0 2.712 4.285A.5.5 0 0 1 7.163 9h.63l.853-.854a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.793-.793-1-1h-6.63a.5.5 0 0 1-.451-.285A3 3 0 0 0 4 5z"/>
+    <path d="M4 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+  </svg>
+  <span>{{ hasKeys ? 'Update Cloud Keys' : 'Add Cloud Keys' }}</span>
+</div>
+
+<!-- Modal Dialog -->
+<div class="modal-overlay" *ngIf="showDialog">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h3>{{ hasKeys ? 'Update Cloud Keys' : 'Add Cloud Keys' }}</h3>
+      <button class="close-button" (click)="closeDialog()">×</button>
+    </div>
+    
+    <div class="modal-body">
+      <p class="info-text">
+        Enter your AWS access and secret keys to enable direct deployment capabilities.
+        Your keys are securely stored and only used for authorized AWS operations.
+      </p>
+      
+      <div class="form-group">
+        <label for="accessKey">Access Key</label>
+        <input 
+          type="text" 
+          id="accessKey" 
+          [(ngModel)]="accessKey" 
+          placeholder="Enter your AWS access key"
+          [disabled]="isSaving"
+        >
+      </div>
+      
+      <div class="form-group">
+        <label for="secretKey">Secret Key</label>
+        <input 
+          type="password" 
+          id="secretKey" 
+          [(ngModel)]="secretKey" 
+          placeholder="Enter your AWS secret key"
+          [disabled]="isSaving"
+        >
+      </div>
+      
+      <div class="alert success" *ngIf="saveSuccess">
+        Keys saved successfully!
+      </div>
+      
+      <div class="alert error" *ngIf="saveError">
+        {{ errorMessage }}
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button 
+        class="clear-button" 
+        *ngIf="hasKeys" 
+        (click)="clearKeys()" 
+        [disabled]="isSaving"
+      >
+        Clear Keys
+      </button>
+      <button 
+        class="save-button" 
+        (click)="saveKeys()" 
+        [disabled]="isSaving"
+      >
+        {{ isSaving ? 'Saving...' : 'Save Keys' }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ChatService } from '../services/chat.service';
 import { ChatMessage } from '../models/chat-message';
 import { ChatSession } from '../models/chat-session';
+import { CloudKeysDialogComponent } from '../components/cloud-keys-dialog/cloud-keys-dialog.component';
 import { marked } from 'marked';
 import * as Prism from 'prismjs';
 import 'prismjs/components/prism-javascript';
@@ -20,7 +21,7 @@ import 'prismjs/components/prism-yaml';
 @Component({
   selector: 'app-chat',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CloudKeysDialogComponent],
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.css']
 })
