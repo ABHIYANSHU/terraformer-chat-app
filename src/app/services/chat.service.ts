@@ -156,15 +156,17 @@ export class ChatService implements OnDestroy {
     });
 
     if ((content.includes("aws") || content.includes("AWS")) && (content.includes("deploy") || content.includes("Deploy") || content.includes("Deploying") || content.includes("deploying"))) {
-      content = content + "Please provide step by step guide with full terraform script. region should be us-east-1, do not attach or use any aws key pair, use ami-0f88e80871fd81e91 as ami & t2.medium instance type. Also add access key and secret key in the provider component & two empty variables for them in the script, so that user can later pass them in the command line. Remember to check if any important resource creation is missing which is extremely important. Always create and attach the security group to ec2 which allows all inbound and outbound traffic. Always use yum for package installation. When provising an angular app always install angular cli & use this 'ng serve --host 0.0.0.0 --port 4200' to deploy on port 4200. Provide the complete terraform code in a single tf file. Show the output public ec2 instance ip address in the output section of the script.";
-    }
+      content = content + "Please provide step by step guide with full terraform script. Do not included the provider and region part in the script that part is already taken care of, do not attach or use any aws key pair, use ami-0f88e80871fd81e91 as ami & t2.medium instance type. Remember to check if any important resource creation is missing which is extremely important. Always create and attach the security group to ec2 which allows all inbound and outbound traffic. Always use yum for package installation. Show the output public ec2 instance ip address in the output section of the script.";
 
-    if ((content.includes("load balancer") || content.includes("load-balancer")) && (content.includes("auto-scalling") || content.includes("auto scalling"))) {
-      content = content + "Also output the load balancer url";
-    }
-    
-    if ((content.includes("angular") || content.includes("Angular"))) {
-      content = content + "remember to use node version 22";
+      if ((content.includes("angular") || content.includes("Angular"))) {
+        content = content + "remember to use node version 22. When provising an angular app always install angular cli & use this 'ng serve --host 0.0.0.0 --port 4200' to deploy on port 4200";
+      }
+
+      if ((content.includes("load balancer") || content.includes("load-balancer"))) {
+        content = content + "Also output the load balancer url";
+      }
+
+      content = content + "Provide the complete terraform code in a single tf file."
     }
 
     // Prepare the request body
@@ -285,13 +287,21 @@ export class ChatService implements OnDestroy {
   
   // Handle terraform output from socket
   private handleTerraformOutput(output: TerraformOutput): void {
+    // Strip ANSI color codes from the output
+    const cleanOutput = this.stripAnsiCodes(output.output);
+    
     // Add the terraform output as a message
     this.addMessage({
       id: this.generateId(),
-      content: '```terraform\n' + output.output + '\n```',
+      content: '```terraform\n' + cleanOutput + '\n```',
       sender: 'assistant',
       timestamp: output.timestamp
     });
+  }
+  
+  // Strip ANSI color codes from text
+  private stripAnsiCodes(text: string): string {
+    return text.replace(/\u001b\[\d+m/g, '');
   }
   
   // Handle terraform status from socket
