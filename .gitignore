@@ -44,4 +44,4 @@ Thumbs.db
 # Environment files (for security)
 # Uncomment the following line in a real production environment
 # /src/environments/*.ts
-src/environments/*
+# src/environments/*
