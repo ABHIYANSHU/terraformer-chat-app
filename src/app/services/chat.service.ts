@@ -14,6 +14,7 @@ export class ChatService {
   private currentSessionId = new BehaviorSubject<string>('');
   
   private apiUrl = environment.apiUrl;
+  private terraformApplyUrl = environment.terraformApplyUrl;
   
   constructor(private http: HttpClient) {
     // Load saved sessions from localStorage or create a new one if none exist
@@ -157,6 +158,9 @@ export class ChatService {
           timestamp: new Date()
         });
 
+        // Check if we need to trigger terraform apply
+        // this.checkAndTriggerTerraformApply(content, response.message);
+
         // Update session title if it's the first user message
         // We need to count the real messages (excluding loading messages)
         // and check if this is the first user message in the conversation
@@ -202,6 +206,29 @@ export class ChatService {
       language: '',
       content
     };
+  }
+  
+  // Check if we need to trigger terraform apply
+  private checkAndTriggerTerraformApply(userMessage: string, assistantResponse: string): void {
+    // Check if the message contains a code block or if it contains both "deploy" and "terraform"
+    const hasCodeBlock = assistantResponse.includes('```');
+    const hasTerraformDeploy = 
+      (userMessage.toLowerCase().includes('terraform') && userMessage.toLowerCase().includes('deploy')) ||
+      (assistantResponse.toLowerCase().includes('terraform') && assistantResponse.toLowerCase().includes('deploy'));
+    
+    if (hasCodeBlock || hasTerraformDeploy) {
+      console.log('Triggering Terraform apply...');
+      
+      // Make the API request to trigger terraform apply
+      this.http.post(this.terraformApplyUrl, {}).subscribe({
+        next: (response: any) => {
+          console.log('Terraform apply triggered successfully:', response);
+        },
+        error: (error) => {
+          console.error('Error triggering Terraform apply:', error);
+        }
+      });
+    }
   }
 
   private generateId(): string {
