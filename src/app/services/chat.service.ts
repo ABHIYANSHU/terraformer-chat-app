@@ -127,6 +127,10 @@ export class ChatService {
       content = content + "Please provide step by step guide with full terraform script. region should be us-east-1, do not attach or use any aws key pair, use ami-0f88e80871fd81e91 as ami & t2.medium instance type. Also add access key and secret key in the provider component & two empty variables for them in the script, so that user can later pass them in the command line. Remember to check if any important resource creation is missing which is extremely important. Always create and attach the security group to ec2 which allows all inbound and outbound traffic. Always use yum for package installation. When provising an angular app always install angular cli & use this 'ng serve --host 0.0.0.0 --port 4200' to deploy on port 4200. Provide the complete terraform code in a single tf file. Show the output public ec2 instance ip address in the output section of the script.";
     }
 
+    if ((content.includes("load balancer") || content.includes("load-balancer")) && (content.includes("auto-scalling") || content.includes("auto scalling"))) {
+      content = content + "Also output the load balancer url";
+    }
+    
     if ((content.includes("angular") || content.includes("Angular"))) {
       content = content + "remember to use node version 22";
     }
