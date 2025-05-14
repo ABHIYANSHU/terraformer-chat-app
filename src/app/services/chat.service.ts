@@ -1,24 +1,56 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { Injectable, OnDestroy } from '@angular/core';
+import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { ChatMessage } from '../models/chat-message';
 import { ChatSession } from '../models/chat-session';
 import { environment } from '../../environments/environment';
+import { SocketService } from './socket.service';
+import { TerraformOutput, TerraformStatus } from '../models/terraform-output';
 
 @Injectable({
   providedIn: 'root'
 })
-export class ChatService {
+export class ChatService implements OnDestroy {
   private messages = new BehaviorSubject<ChatMessage[]>([]);
   private chatSessions = new BehaviorSubject<ChatSession[]>([]);
   private currentSessionId = new BehaviorSubject<string>('');
   
   private apiUrl = environment.apiUrl;
   private terraformApplyUrl = environment.terraformApplyUrl;
+  private terraformOutputSubscription: Subscription;
+  private terraformStatusSubscription: Subscription;
   
-  constructor(private http: HttpClient) {
+  constructor(
+    private http: HttpClient,
+    private socketService: SocketService
+  ) {
     // Load saved sessions from localStorage or create a new one if none exist
     this.loadSavedSessions();
+    
+    // Subscribe to terraform output events
+    this.terraformOutputSubscription = this.socketService.getTerraformOutput().subscribe(
+      (output: TerraformOutput) => {
+        this.handleTerraformOutput(output);
+      }
+    );
+    
+    // Subscribe to terraform status events
+    this.terraformStatusSubscription = this.socketService.getTerraformStatus().subscribe(
+      (status: TerraformStatus) => {
+        this.handleTerraformStatus(status);
+      }
+    );
+  }
+
+  ngOnDestroy(): void {
+    // Clean up subscriptions when the service is destroyed
+    if (this.terraformOutputSubscription) {
+      this.terraformOutputSubscription.unsubscribe();
+    }
+    
+    if (this.terraformStatusSubscription) {
+      this.terraformStatusSubscription.unsubscribe();
+    }
   }
 
   getMessages(): Observable<ChatMessage[]> {
@@ -163,7 +195,7 @@ export class ChatService {
         });
 
         // Check if we need to trigger terraform apply
-        // this.checkAndTriggerTerraformApply(content, response.message);
+        this.checkAndTriggerTerraformApply(content, response.message);
 
         // Update session title if it's the first user message
         // We need to count the real messages (excluding loading messages)
@@ -223,6 +255,14 @@ export class ChatService {
     if (hasCodeBlock || hasTerraformDeploy) {
       console.log('Triggering Terraform apply...');
       
+      // Add a message indicating that Terraform is being executed
+      this.addMessage({
+        id: this.generateId(),
+        content: '🚀 Executing Terraform... Please wait while resources are being provisioned.',
+        sender: 'assistant',
+        timestamp: new Date()
+      });
+      
       // Make the API request to trigger terraform apply
       this.http.post(this.terraformApplyUrl, {}).subscribe({
         next: (response: any) => {
@@ -230,9 +270,52 @@ export class ChatService {
         },
         error: (error) => {
           console.error('Error triggering Terraform apply:', error);
+          
+          // Add error message
+          this.addMessage({
+            id: this.generateId(),
+            content: '❌ Error triggering Terraform: ' + error.message,
+            sender: 'assistant',
+            timestamp: new Date()
+          });
         }
       });
     }
+  }
+  
+  // Handle terraform output from socket
+  private handleTerraformOutput(output: TerraformOutput): void {
+    // Add the terraform output as a message
+    this.addMessage({
+      id: this.generateId(),
+      content: '```terraform\n' + output.output + '\n```',
+      sender: 'assistant',
+      timestamp: output.timestamp
+    });
+  }
+  
+  // Handle terraform status from socket
+  private handleTerraformStatus(status: TerraformStatus): void {
+    let content = '';
+    
+    switch(status.status) {
+      case 'started':
+        content = '🔄 Terraform execution started: ' + (status.message || '');
+        break;
+      case 'completed':
+        content = '✅ Terraform execution completed successfully: ' + (status.message || '');
+        break;
+      case 'error':
+        content = '❌ Terraform execution failed: ' + (status.message || '');
+        break;
+    }
+    
+    this.addMessage({
+      id: this.generateId(),
+      content: content,
+      sender: 'assistant',
+      timestamp: status.timestamp
+    });
   }
 
   private generateId(): string {
